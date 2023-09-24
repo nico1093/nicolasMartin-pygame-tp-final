@@ -13,25 +13,26 @@ JUMP_HEIGTH = 150
 GRAVEDAD = 0.02 
 SALTO_VELOCIDAD = 10
 MAX_SALTOS = 2
-#
-COLORES = {
-    'VERDE': (0,255,0),
-    'BLANCO': (255,255,255),
-    'ROJO': (255, 0, 0),
-    'AZUL' :  (0, 0, 255),
-    'NEGRO': (0,0,0)
-    }
+
+VERDE= (0,255,0)
+BLANCO= (255,255,255)
+ROJO= (255, 0, 0)
+AZUL =  (0, 0, 255)
+NEGRO= (0,0,0)
+TRANSPARENTE = (0,0,0,0)
+
 #Proyectiles
 PROYECTIL_SIZE = (50,80)
-DEBUG = True  
+DEBUG = False  
 DUPLICATE  = 2
-
+#PLATAFORMAS
+W_PLATFORM = 50
+H_PLATFORM = 50
 FLOOR = 365
 RECT_COLITION = 5
 RECT_COLITION_H_W = 20
 #PANTALLAS SCREEN
 GAME_OVER = pygame.transform.scale(pygame.image.load("image/gameover.jpg"),(ANCHO_VENTANA,ALTO_VENTANA))
-
 
 
 FPS = 60

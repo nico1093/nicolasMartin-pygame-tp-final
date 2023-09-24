@@ -1,64 +1,108 @@
 import pygame
 import sys
-import random
 from CONST import *
 from player import Player
 from plataforma import Plataforma
 from enemy import Enemy
 from money import Money
+import sqlite3
+import json
+from others import saveScoreInDataBase,top_five_score
+from button import Button
+###############
 
 screen = pygame.display.set_mode((ANCHO_VENTANA,ALTO_VENTANA))
 pygame.init()
+
+
+pygame.mixer.init()
+sound = pygame.mixer.Sound('music/Introduccion.mp3')
+sound.set_volume(0.1)
+sound.play(-1)
+
+
+
 clock = pygame.time.Clock()
 delta_ms = 0
-imagen_fondo1 = pygame.image.load("image/background1.jpg")
-imagen_fondo2 = pygame.image.load("image/background2.png")
+#player = Player(x=0,y=0,speed=10,gravity=10,jump=20,jump_power=5,jump_height=100)
+init_page = 0 #Determina el paginado entre el inicio los score
+#DB
+score = 0
+font_score = pygame.font.Font('font/Metal Slug Latino Regular.ttf', 36)
+font_lvl = pygame.font.Font('font/Valorant-Font.ttf',100)
+font = pygame.font.Font('font/Valorant-Font.ttf',30)
 
+# Conexión a la base de datos
+# Crea la tabla si no existe
+connection = sqlite3.connect("puntajes.db")
+cursor = connection.cursor()
+create_table = '''
+    CREATE TABLE IF NOT EXISTS score_player (
+        name CHAR(10),
+        score INTEGER
+    )
+'''
+cursor.execute(create_table)
+#input_name_player = pygame_textinput.TextInput(font_family="Arial", font_size=24)
 
-imagen_fondo1 = pygame.transform.scale(imagen_fondo1,(ANCHO_VENTANA,ALTO_VENTANA))
-imagen_fondo2 = pygame.transform.scale(imagen_fondo2,(ANCHO_VENTANA,ALTO_VENTANA))
+name_player = 'Kakaroto'
 
-imagen_fondo2.set_colorkey(COLORES['VERDE'])
-
-plataformas = []
-enemys = []
-monies = []
-#plataformas 1
-plataformas.append(Plataforma(500,325,50,50))
-plataformas.append(Plataforma(542,325,50,50))
-plataformas.append(Plataforma(584,325,50,50))
-plataformas.append(Plataforma(628,325,50,50))
-#plataformas 2
-plataformas.append(Plataforma(100,200,50,50))
-plataformas.append(Plataforma(142,200,50,50))
-plataformas.append(Plataforma(184,200,50,50))
-plataformas.append(Plataforma(228,200,50,50))
-#plataformas 3
-plataformas.append(Plataforma(400,150,50,50))
-plataformas.append(Plataforma(442,150,50,50))
-plataformas.append(Plataforma(484,150,50,50))
-#Enemigos
-
-enemys.append(Enemy(x=500,y=FLOOR + 15,time_animation=80,speed=5,position_wall_l=500,position_wall_r=700))
-enemys.append(Enemy(x=100,y=125,time_animation=80,speed=5,position_wall_l=100,position_wall_r=250))
-
-#Mooney
-monies.append(Money(440,FLOOR,0))
-monies.append(Money(200,150,1))
-monies.append(Money(400,375,2))
-monies.append(Money(15,FLOOR,3))
-monies.append(Money(600 ,375,4))
-#Jugador
-player = Player(x=0,y=0,speed=10,gravity=10,jump=20,jump_power=150,jump_height=50)
-proyectiles = pygame.sprite.Group()
-
+# Guardar los cambios y cerrar la conexión
+connection.commit()
+connection.close()
+nivel = 1
+init_game = False
+run_level = False
 run = True
+save_data = False
+
+def on_click(parametro):
+    print(f'Value param: {parametro}')
+
+def on_click_in_score(parametro = None):
+    position_x = 100
+    position_y = 50
+    for registro_name,registro_score in top_five_score(cursor):
+        texto = font.render(f'{registro_name} : {registro_score}',True,BLANCO,AZUL)
+        screen.blit(texto,(position_x,position_y))
+        position_y += 40
+ 
+#Instancia de bottones
+button_play = Button(screen,700,400,100,50,TRANSPARENTE,on_click,init_game,'Play','font/Valorant-Font.ttf',20,BLANCO)
+button_score = Button(screen,700,450,100,50,TRANSPARENTE,on_click,False,'Score','font/Valorant-Font.ttf',20,BLANCO)
+button_back = Button(screen,0 ,500,100,50,TRANSPARENTE,on_click,False,'Back','font/Valorant-Font.ttf',20,BLANCO)
+
+
+def init_screen():
+    imagen_fondo = pygame.transform.scale(pygame.image.load(f"image/Fondo.jpeg"),(ANCHO_VENTANA,ALTO_VENTANA))
+    screen.blit(imagen_fondo,imagen_fondo.get_rect())
+    if button_score.on_click_button:
+        if button_back.on_click_button:
+            button_score.on_click_button = not button_score.on_click_button
+            button_back.on_click_button = button_score.on_click_button
+        else:
+            position_x = ANCHO_VENTANA / 2
+            position_y = 50
+            for registro_name,registro_score in top_five_score(cursor):
+                texto = font.render(f'{registro_name} : {registro_score}',True,BLANCO,TRANSPARENTE)
+                screen.blit(texto,(position_x,position_y))
+                position_y += 40
+            button_back.update(events)
+            button_back.draw()
+    else:
+        button_play.update(events)
+        button_play.draw()
+        button_score.update(events)
+        button_score.draw()
+
 while run:
-
+    events = pygame.event.get()
     pygame.time.delay(50) #Normaliza velocidad de juego.
-
-    for event in pygame.event.get():
+    keys = pygame.key.get_pressed()
+    for event in events:
         if event.type == pygame.QUIT:
+            pygame.mixer.music.stop()
+            pygame.mixer.quit()
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYUP:
@@ -66,45 +110,114 @@ while run:
                 player.can_shoot = True
             if event.key == pygame.K_UP:
                 player.can_jump = True
+        
+            
 
-    keys = pygame.key.get_pressed()
+    if button_play.on_click_button:#init_game:
+        if not run_level:
+            
+            plataformas = []
+            enemys = []
+            monies = []
+            imagen_fondo = pygame.transform.scale(pygame.image.load(f"image/score.jpeg"),(ANCHO_VENTANA,ALTO_VENTANA))
+            screen.blit(imagen_fondo,imagen_fondo.get_rect())
+            if nivel <= 3:
+                #Lectura de arhivo JSON
+                with open(f'datos_json/nivel_{nivel}.json', 'r') as archivo:
+                    elements = json.load(archivo)
+                init_text = font_lvl.render(f'Mision {nivel}', True, BLANCO)
+                init_text_rect = init_text.get_rect()
+                init_text_rect.center = imagen_fondo.get_rect().center
+                press_text = font.render('Presionar Enter para continuar...',True, BLANCO)
+                press_text_rect = init_text.get_rect()
+                press_text_rect.center = imagen_fondo.get_rect().midbottom
+                screen.blit(init_text, init_text_rect)
+                screen.blit(press_text, press_text_rect)
+            else:
+                #saveScoreInDataBase(cursor,name_player,player.score)
+                button_play.on_click_button = False
+                #init_screen()
+                continue
+            if keys[pygame.K_RETURN] and nivel <= 3:
+                player = Player(x=0,y=0,speed=10,gravity=10,jump=20,jump_power=5,jump_height=100)
+                run_level = True
+                proyectiles = pygame.sprite.Group()
+                
+                #Plataformas
+                for element in elements['nivel']['plataformas']:
+                    plataformas.append(Plataforma(element['x'],element['y']))
+                #Enemigos
+                for element in elements['nivel']['enemigos']:
+                    enemys.append(Enemy(element['x'],element['y'],element['time_animation'],element['speed'],element['position_wall_l'],element['position_wall_r']))
+                #Mooney
+                index = 0
+                for element in elements['nivel']['monies']:
+                    monies.append(Money(element['x'],element['y'],index))
+                    index+=1                  
+                imagen_fondo = pygame.transform.scale(pygame.image.load(f"image/nivel_{nivel}/background.jpeg"),(ANCHO_VENTANA,ALTO_VENTANA))
+        else:
+            screen.blit(imagen_fondo,imagen_fondo.get_rect())
+            if player.get_life() <= 0:
+                screen.fill(NEGRO)
+                screen.blit(GAME_OVER,GAME_OVER.get_rect()) #Game Over
+                player._image.set_alpha(0)
+                plataformas = [] 
+                enemys = []
+                monies = []
+                saveScoreInDataBase(cursor,name_player,player.score)
+            if len(monies) == 0 and player.get_life() > 0:
+                nivel += 1
+                run_level = False
+            score_text = font_score.render("Score: " + str(player.score), True, BLANCO)
+            screen.blit(score_text, (10, 10))
+            
+                
+            
+            
+            player.events(keys,proyectiles,plataformas)
+            player.update(plataformas,enemys,monies)
+            proyectiles.update(player,enemys)    
+                
+            player.draw(screen)
 
+            for plataforma in plataformas:
+                    plataforma.draw(screen)
+
+
+            for enemy in enemys:
+                enemy.update()
+                enemy.draw(screen)
+            for proyectil in proyectiles:
+                proyectil.draw(screen)
+
+            for money in monies:
+                money.draw(screen)
+    else:
+        init_screen()
+        '''imagen_fondo = pygame.transform.scale(pygame.image.load(f"image/Fondo.jpeg"),(ANCHO_VENTANA,ALTO_VENTANA))
+        screen.blit(imagen_fondo,imagen_fondo.get_rect())
+        if button_score.on_click_button:
+            if button_back.on_click_button:
+                button_score.on_click_button = not button_score.on_click_button
+                button_back.on_click_button = button_score.on_click_button
+            else:
+                position_x = ANCHO_VENTANA / 2
+                position_y = 50
+                for registro_name,registro_score in top_five_score(cursor):
+                    texto = font.render(f'{registro_name} : {registro_score}',True,BLANCO,TRANSPARENTE)
+                    screen.blit(texto,(position_x,position_y))
+                    position_y += 40
+                button_back.update(events)
+                button_back.draw()
+        else:
+            button_play.update(events)
+            button_play.draw()
+            button_score.update(events)
+            button_score.draw()'''
     
-    
-    screen.blit(imagen_fondo1,imagen_fondo1.get_rect())
-    screen.blit(imagen_fondo2,imagen_fondo2.get_rect())
-    
-    if player.get_life() == 0:
-        screen.fill(COLORES['NEGRO'])
-        screen.blit(GAME_OVER,GAME_OVER.get_rect()) #Game Over
-    if len(enemys) == 0:
-        boss = Enemy(ANCHO_VENTANA,FLOOR,10,10,ANCHO_VENTANA,0,500)
-    for plataforma in plataformas:
-        plataforma.draw(screen)
-
-    player.events(keys,proyectiles,plataformas)
-    player.update(delta_ms,plataformas,enemys,monies)
-    proyectiles.update(player,enemys)
-    player.draw(screen)
-    
-    for enemy in enemys:
-        enemy.update(delta_ms)
-        enemy.draw(screen)
-    for proyectil in proyectiles:
-        proyectil.draw(screen)
-
-    for money in monies:
-        money.draw(screen)
-
-
-    # enemigos update
-    # player dibujarlo
-    # dibujar todo el nivel
-
     pygame.display.flip()
     
     delta_ms += clock.tick(FPS)
-
 
     
 

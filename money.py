@@ -19,7 +19,7 @@ class Money(pygame.sprite.Sprite):
     
     def draw(self,screen):
         if DEBUG:
-            pygame.draw.rect(screen,COLORES['ROJO'],self._rect)
-        self._image.set_colorkey(COLORES['NEGRO'])            
+            pygame.draw.rect(screen,ROJO,self._rect)
+        self._image.set_colorkey(NEGRO)            
         screen.blit(self._image,self._rect)
     

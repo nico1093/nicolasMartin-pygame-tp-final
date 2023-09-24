@@ -1,6 +1,6 @@
 import pygame
 from CONST import *
-
+import sqlite3
 
 def getSurfaceFromSpriteSheet(path,columnas,filas,flip=False,size = None,step = 1):
         lista = []
@@ -24,3 +24,18 @@ def getSurfaceFromSpriteSheet(path,columnas,filas,flip=False,size = None,step = 
                 lista.append(surface_fotograma)
         return lista
 
+def saveScoreInDataBase(cursor, nombre_jugador:str, puntaje:int):
+    sentencia_sql = "INSERT INTO score_player (name, score) VALUES (?, ?)"
+    conn = sqlite3.connect('puntajes.db')
+    cursor = conn.cursor()
+    cursor.execute(sentencia_sql,(nombre_jugador, puntaje))
+    conn.commit()
+    conn.close()
+
+def top_five_score(cursor):
+    conn = sqlite3.connect('puntajes.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT name, score FROM score_player ORDER BY score DESC')
+    results = cursor.fetchall()
+    conn.close()
+    return results [:10]
