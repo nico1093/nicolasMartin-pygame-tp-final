@@ -31,7 +31,7 @@ class Proyectil(pygame.sprite.Sprite):
         if 0 > self._rect.x or self._rect.x > ANCHO_VENTANA:  # Si el proyectil sale de la pantalla, eliminarlo
             self.kill()
         self.kill_enemy(enemys)
-        self._image.set_colorkey(COLORES['AZUL'])
+        self._image.set_colorkey(AZUL)
 
     def is_impact_enemy(self,enemy) -> bool:
         return self._rect_colition.colliderect(enemy.get_colition())
@@ -41,13 +41,12 @@ class Proyectil(pygame.sprite.Sprite):
             for enemy in enemys:
                 if self.is_impact_enemy(enemy):
                         self.kill()
-                        #enemys.remove(enemy)
                         enemy.damage()
         
 
 
     def draw(self,screen):
         if DEBUG:
-            pygame.draw.rect(screen,COLORES['ROJO'],self._rect)
-            pygame.draw.rect(screen, COLORES['VERDE'], self._rect_colition)
+            pygame.draw.rect(screen, ROJO,self._rect)
+            pygame.draw.rect(screen, VERDE, self._rect_colition)
         screen.blit(self._image,self._rect)

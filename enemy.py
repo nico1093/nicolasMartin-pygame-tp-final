@@ -1,6 +1,7 @@
 import pygame
 from CONST import *
 from others import getSurfaceFromSpriteSheet
+from player import Player
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self,x,y,time_animation,speed, position_wall_l,position_wall_r) -> None:
@@ -28,9 +29,12 @@ class Enemy(pygame.sprite.Sprite):
         return self._is_a_live
 
     def damage(self):
+        sound = pygame.mixer.Sound('music/grito_dead.mp3')
         self._health -= 1
         if self._health == 0:
             self._is_a_live = False
+            Player.score += 500
+            sound.play()
 
     def get_colition(self):
         return self._rect_colition   
@@ -47,7 +51,7 @@ class Enemy(pygame.sprite.Sprite):
                 self._animation = self._dead
             self._speed *= -1
     
-    def _enemy_animation(self,delta_ms):
+    def _enemy_animation(self):
         if  self._direction == MUERTE:
             if(self._frame < len(self._animation) - 1):
                 self._frame += 1 
@@ -65,21 +69,21 @@ class Enemy(pygame.sprite.Sprite):
         self._rect_colition.x += self._speed
 
 
-    def update(self,delta_ms):
-        self._enemy_animation(delta_ms)
+    def update(self):
+        self._enemy_animation()
         self.movement()
         self.desplazamiento()
         
 
     def draw(self,screen):
         if DEBUG:
-            pygame.draw.rect(screen,COLORES['BLANCO'],self._rect)
-            pygame.draw.rect(screen,COLORES['VERDE'],self._rect_colition) 
-            pygame.draw.rect(screen,COLORES['AZUL'],self._rect_limit_move_r)
-            pygame.draw.rect(screen,COLORES['AZUL'],self._rect_limit_move_l)
+            pygame.draw.rect(screen,BLANCO,self._rect)
+            pygame.draw.rect(screen,VERDE,self._rect_colition) 
+            pygame.draw.rect(screen,AZUL,self._rect_limit_move_r)
+            pygame.draw.rect(screen,AZUL,self._rect_limit_move_l)
         if self._health > 0:
             self._image = self._animation[self._frame]
-            self._image.set_colorkey(COLORES['NEGRO'])
+            self._image.set_colorkey(NEGRO)
             screen.blit(self._image,self._rect)
         
 
