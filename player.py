@@ -6,6 +6,7 @@ from proyectil import Proyectil
 
 class Player():
     score = 0
+    life = 3
 
     def __init__(self, x, y, speed, gravity, jump, jump_power,jump_height,interval_time_jump=100) -> None:
         self._walk_r = getSurfaceFromSpriteSheet('image\charactrer\player.png', 13, 4)[13:22]
@@ -18,14 +19,13 @@ class Player():
         self._jump_l_up = getSurfaceFromSpriteSheet('image\charactrer\player.png', 13, 4, True)[39:45]
         self._jump_r_down = getSurfaceFromSpriteSheet('image\charactrer\player.png', 13, 4)[45:48]
         self._jump_l_down = getSurfaceFromSpriteSheet('image\charactrer\player.png', 13, 4, True)[45:48]
-        #self.score = 0
         self._gravity = gravity
         self._jump = jump
         self._direction = DERECHA
         self._jump_power = jump_power
         self.speed_jump = 5
         self._frame = 0
-        self._life = 3
+        #self._life = 3
         self._position_x = x
         self._position_y = y
         self._speed = speed
@@ -38,9 +38,10 @@ class Player():
         
         #Colitions
         self._rect_colition = pygame.Rect(self._rect.x + RECT_COLITION, + self._rect.y + RECT_COLITION,self._rect.w -RECT_COLITION_H_W,self._rect.h -RECT_COLITION_H_W)
-        self._rect_colition_floor_l = pygame.Rect(self._rect.centerx, self._rect.y + self._rect.h-20,self._rect.w/3,RECT_COLITION)
-        self._rect_colition_floor_r = pygame.Rect(self._rect.x + RECT_COLITION, self._rect.y + self._rect.h-20,self._rect.w/3,RECT_COLITION)
-
+        self._rect_colition_floor = pygame.Rect(self._rect.x,self._rect.y + self._rect.h-20,self._rect.w,RECT_COLITION)
+        
+        
+        
         self.can_shoot = True
         self.can_jump = True
         #Times
@@ -59,12 +60,8 @@ class Player():
 
     def get_direction(self):
         return self._direction
+
     
-    def get_life(self):
-        return self._life
-    
-    def set_life(self, life):
-        self._life = life
 
 
     def caminar(self, direccion,plataformas):
@@ -134,18 +131,15 @@ class Player():
     def _desplazamiento_x(self, desplazamiento):
         self._rect.x += desplazamiento
         self._rect_colition.x += desplazamiento
-        self._rect_colition_floor_l.x += desplazamiento
-        self._rect_colition_floor_r.x += desplazamiento
+        self._rect_colition_floor.x += desplazamiento
 
     def _desplazamiento_y(self, desplazamiento):
         self._rect.y += desplazamiento
         self._rect_colition.y += desplazamiento
-        self._rect_colition_floor_l.y += desplazamiento
-        self._rect_colition_floor_r.y += desplazamiento
-
+        self._rect_colition_floor.y += desplazamiento
 
     def _is_floor(self):
-        return self._rect_colition_floor_l.colliderect()
+        return self._rect_colition_floor.colliderect()
 
     
     def _in_platform(self, plataformas) -> bool:
@@ -153,14 +147,10 @@ class Player():
         if self._rect.y >= FLOOR:
             return True
         else:
-            if self._direction == DERECHA:
-                for plataforma in plataformas:
-                    if self._rect_colition_floor_r.colliderect(plataforma.get_colition()):
-                        return True
-            else:
-                for plataforma in plataformas:
-                    if self._rect_colition_floor_l.colliderect(plataforma.get_colition()):
-                        return True
+            for plataforma in plataformas:
+                if self._rect_colition_floor.colliderect(plataforma.get_colition()):
+                    return True
+            
         return False
     
     def _colition_enemy(self,enemys) -> bool:
@@ -179,12 +169,11 @@ class Player():
     
     def _lose_life(self,enemys):
         if self._colition_enemy(enemys):
-            self.set_life(self.get_life() - 1)
+            Player.life -= 1
             #Vuelve a inicio
             self.go_init()
             self._rect_colition = pygame.Rect(self._rect.x + RECT_COLITION, + self._rect.y + RECT_COLITION,self._rect.w -RECT_COLITION_H_W,self._rect.h -RECT_COLITION_H_W)
-            self._rect_colition_floor_l = pygame.Rect(self._rect.centerx, self._rect.y + self._rect.h-20,self._rect.w/3,RECT_COLITION)
-            self._rect_colition_floor_r = pygame.Rect(self._rect.x + RECT_COLITION, self._rect.y + self._rect.h-20,self._rect.w/3,RECT_COLITION)
+            self._rect_colition_floor = pygame.Rect(self._rect.x, self._rect.y + self._rect.h-20,self._rect.w,RECT_COLITION)
         
             
 
@@ -227,8 +216,10 @@ class Player():
         if DEBUG:
             pygame.draw.rect(screen, BLANCO, self._rect)
             pygame.draw.rect(screen, VERDE, self._rect_colition)
-            pygame.draw.rect(screen, AZUL, self._rect_colition_floor_l)
-            pygame.draw.rect(screen, NEGRO, self._rect_colition_floor_r)
+            pygame.draw.rect(screen, NEGRO, self._rect_colition_floor)
+            pygame.draw.rect(screen, ROJO, self._rect_colition_wall_l)
+            pygame.draw.rect(screen, ROJO, self._rect_colition_wall_l)
+            pygame.draw.rect(screen, ROJO, self._rect_colition_high)
         self._image = self._animation[self._frame]
         self._image.set_colorkey(VERDE)
         screen.blit(self._image, self._rect)

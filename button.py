@@ -4,11 +4,11 @@ from widget import Widget
 
 
 class Button(Widget):
-    def __init__(self,master,x,y,w,h,color_background,on_click,on_click_button,text,font,font_size,font_color):
+    def __init__(self,master,x,y,w,h,color_background,on_click,on_click_param,text,font,font_size,font_color):
         super().__init__(master,x,y,w,h,color_background)
         pygame.font.init()
         self.on_click = on_click
-        self.on_click_button = on_click_button
+        self.on_click_button = on_click_param
         self._text = text
         self.font_sys = pygame.font.Font(font,font_size)
         self.font_color = font_color
