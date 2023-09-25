@@ -39,7 +39,7 @@ class Proyectil(pygame.sprite.Sprite):
     def kill_enemy(self,enemys):
         if len(enemys) > 0:
             for enemy in enemys:
-                if self.is_impact_enemy(enemy):
+                if self.is_impact_enemy(enemy) and enemy.get_is_a_live():
                         self.kill()
                         enemy.damage()
         

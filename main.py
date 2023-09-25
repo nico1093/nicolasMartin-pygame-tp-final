@@ -24,11 +24,10 @@ sound.play(-1)
 
 clock = pygame.time.Clock()
 delta_ms = 0
-#player = Player(x=0,y=0,speed=10,gravity=10,jump=20,jump_power=5,jump_height=100)
-init_page = 0 #Determina el paginado entre el inicio los score
 #DB
 score = 0
 font_score = pygame.font.Font('font/Metal Slug Latino Regular.ttf', 36)
+font_life = pygame.font.Font('font/Metal Slug Latino Regular.ttf', 36)
 font_lvl = pygame.font.Font('font/Valorant-Font.ttf',100)
 font = pygame.font.Font('font/Valorant-Font.ttf',30)
 
@@ -54,19 +53,12 @@ nivel = 1
 init_game = False
 run_level = False
 run = True
-save_data = False
+is_game_over = False
 
 def on_click(parametro):
     print(f'Value param: {parametro}')
 
-def on_click_in_score(parametro = None):
-    position_x = 100
-    position_y = 50
-    for registro_name,registro_score in top_five_score(cursor):
-        texto = font.render(f'{registro_name} : {registro_score}',True,BLANCO,AZUL)
-        screen.blit(texto,(position_x,position_y))
-        position_y += 40
- 
+
 #Instancia de bottones
 button_play = Button(screen,700,400,100,50,TRANSPARENTE,on_click,init_game,'Play','font/Valorant-Font.ttf',20,BLANCO)
 button_score = Button(screen,700,450,100,50,TRANSPARENTE,on_click,False,'Score','font/Valorant-Font.ttf',20,BLANCO)
@@ -112,8 +104,9 @@ while run:
                 player.can_jump = True
         
             
+    plataforma_image = pygame.transform.scale(pygame.image.load(f"image/plataforma.png"),(ANCHO_VENTANA,ALTO_VENTANA))
 
-    if button_play.on_click_button:#init_game:
+    if button_play.on_click_button:
         if not run_level:
             
             plataformas = []
@@ -133,11 +126,7 @@ while run:
                 press_text_rect.center = imagen_fondo.get_rect().midbottom
                 screen.blit(init_text, init_text_rect)
                 screen.blit(press_text, press_text_rect)
-            else:
-                #saveScoreInDataBase(cursor,name_player,player.score)
-                button_play.on_click_button = False
-                #init_screen()
-                continue
+            
             if keys[pygame.K_RETURN] and nivel <= 3:
                 player = Player(x=0,y=0,speed=10,gravity=10,jump=20,jump_power=5,jump_height=100)
                 run_level = True
@@ -154,25 +143,38 @@ while run:
                 for element in elements['nivel']['monies']:
                     monies.append(Money(element['x'],element['y'],index))
                     index+=1                  
-                imagen_fondo = pygame.transform.scale(pygame.image.load(f"image/nivel_{nivel}/background.jpeg"),(ANCHO_VENTANA,ALTO_VENTANA))
+                imagen_fondo = pygame.transform.scale(pygame.image.load(f"image/nivel_{nivel}/background.jpg"),(ANCHO_VENTANA,ALTO_VENTANA))
         else:
             screen.blit(imagen_fondo,imagen_fondo.get_rect())
-            if player.get_life() <= 0:
-                screen.fill(NEGRO)
-                screen.blit(GAME_OVER,GAME_OVER.get_rect()) #Game Over
+            if run_level:
+                plataforma_image.set_colorkey(VERDE)
+                screen.blit(plataforma_image,plataforma_image.get_rect())
+            
+            #Game Over
+            if Player.life <= 0:
+                if keys[pygame.K_RETURN]:
+                    is_game_over = True
+                press_text = font.render('Presionar Enter para continuar...',True, BLANCO)
+                press_text_rect = init_text.get_rect()
+                press_text_rect.center = imagen_fondo.get_rect().midtop
+                screen.blit(GAME_OVER,GAME_OVER.get_rect()) 
                 player._image.set_alpha(0)
                 plataformas = [] 
                 enemys = []
                 monies = []
-                saveScoreInDataBase(cursor,name_player,player.score)
-            if len(monies) == 0 and player.get_life() > 0:
+            
+            #Pasar de nivel
+            if len(monies) == 0 and Player.life > 0:
                 nivel += 1
                 run_level = False
+
+            #Mostrar score
             score_text = font_score.render("Score: " + str(player.score), True, BLANCO)
             screen.blit(score_text, (10, 10))
             
-                
-            
+            #Mostrar vida
+            life_text = font_life.render("Lifes: " + str(player.life), True, BLANCO)
+            screen.blit(life_text, (ANCHO_VENTANA-150, 10))
             
             player.events(keys,proyectiles,plataformas)
             player.update(plataformas,enemys,monies)
@@ -194,27 +196,16 @@ while run:
                 money.draw(screen)
     else:
         init_screen()
-        '''imagen_fondo = pygame.transform.scale(pygame.image.load(f"image/Fondo.jpeg"),(ANCHO_VENTANA,ALTO_VENTANA))
-        screen.blit(imagen_fondo,imagen_fondo.get_rect())
-        if button_score.on_click_button:
-            if button_back.on_click_button:
-                button_score.on_click_button = not button_score.on_click_button
-                button_back.on_click_button = button_score.on_click_button
-            else:
-                position_x = ANCHO_VENTANA / 2
-                position_y = 50
-                for registro_name,registro_score in top_five_score(cursor):
-                    texto = font.render(f'{registro_name} : {registro_score}',True,BLANCO,TRANSPARENTE)
-                    screen.blit(texto,(position_x,position_y))
-                    position_y += 40
-                button_back.update(events)
-                button_back.draw()
-        else:
-            button_play.update(events)
-            button_play.draw()
-            button_score.update(events)
-            button_score.draw()'''
-    
+        
+    #Reinicia el Juego
+    if is_game_over or nivel >= 4:
+        saveScoreInDataBase(cursor,name_player,Player.score)
+        Player.score = 0
+        Player.life = 3
+        button_play.on_click_button = False
+        nivel = 1
+        is_game_over = False
+
     pygame.display.flip()
     
     delta_ms += clock.tick(FPS)
